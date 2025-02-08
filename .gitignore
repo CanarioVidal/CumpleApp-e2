@@ -1,0 +1,21 @@
+# Archivos sensibles
+.\.env
+.\settings.py
+
+# Base de datos local
+.\instance/
+.\cumpleapp.db
+
+# Archivos generados automáticamente
+.\__pycache__/
+.\*.pyc
+.\*.pyo
+.\*.log
+
+# Carpetas del entorno virtual
+.\venv/
+.\cumpleApp_ent/
+
+# Archivos temporales
+.\email_logs.log
+.\cron_jobs.txt
