@@ -7,11 +7,12 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask_mail import Message
 from apscheduler.schedulers.background import BackgroundScheduler
-import logging
-import requests
 from app.tasks import enviar_correos_recordatorio, enviar_correos_cumpleaños
 from settings import Config
 from app.email_utils import enviar_correo_bienvenida  # Importamos la nueva función
+import logging
+import requests
+import sys
 
 # Crear el Blueprint
 routes = Blueprint('routes', __name__)
@@ -36,38 +37,84 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-### AUTENTICACIÓN ###
 
+### AUTENTICACIÓN ###
 @routes.route('/login', methods=['GET', 'POST'])
 def login():
-    """Maneja el inicio de sesión con reCAPTCHA."""
+    """Maneja el inicio de sesión con reCAPTCHA Enterprise."""
+    
+    # 🔹 Depuración: Verificar que Flask carga la clave correctamente
+    print("========== DEPURACIÓN RECAPTCHA ==========", file=sys.stdout)
+    print(f"Clave pública de reCAPTCHA desde Flask: {current_app.config.get('RECAPTCHA_SITE_KEY')}", file=sys.stdout)
+    print("==========================================", file=sys.stdout)
+    sys.stdout.flush()
+
     error = None
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         recaptcha_response = request.form.get('g-recaptcha-response')
 
-        # Validar reCAPTCHA con Google
-        recaptcha_secret = current_app.config['RECAPTCHA_SECRET_KEY']
-        recaptcha_verify_url = "https://www.google.com/recaptcha/api/siteverify"
-        recaptcha_data = {"secret": recaptcha_secret, "response": recaptcha_response}
-        recaptcha_result = requests.post(recaptcha_verify_url, data=recaptcha_data).json()
+        # 🔹 Verificar si el token de reCAPTCHA realmente se recibió
+        if not recaptcha_response:
+            error = "Fallo en reCAPTCHA: No se recibió un token válido."
+            return render_template('login.html', error=error, RECAPTCHA_SITE_KEY=current_app.config['RECAPTCHA_SITE_KEY'])
 
-        if not recaptcha_result.get("success"):
+        print(f"Token de reCAPTCHA recibido: {recaptcha_response}", file=sys.stdout)
+        sys.stdout.flush()
+
+        # 🔹 URL de validación de reCAPTCHA Enterprise
+        recaptcha_verify_url = f"https://recaptchaenterprise.googleapis.com/v1/projects/printuy-338917/assessments?key={current_app.config['RECAPTCHA_API_KEY']}"
+
+        # 🔹 Datos para validar el token con Google
+        recaptcha_data = {
+            "event": {
+                "token": recaptcha_response,
+                "siteKey": current_app.config['RECAPTCHA_SITE_KEY'],
+                "expectedAction": "login",
+                "userAgent": request.headers.get("User-Agent"),
+                "userIpAddress": request.remote_addr
+            }
+        }
+
+        # 🔹 Realizar la solicitud POST a la API de Google
+        headers = {"Content-Type": "application/json"}
+        recaptcha_result = requests.post(recaptcha_verify_url, json=recaptcha_data, headers=headers).json()
+
+        # 🔹 Depuración: Ver la respuesta de Google en los logs
+        print(f"Respuesta de reCAPTCHA: {recaptcha_result}", file=sys.stdout)
+        sys.stdout.flush()
+
+        # 🔹 Verificar si Google rechazó el token
+        if 'error' in recaptcha_result:
+            error = f"Fallo en reCAPTCHA: {recaptcha_result['error']['message']}"
+            return render_template('login.html', error=error, RECAPTCHA_SITE_KEY=current_app.config['RECAPTCHA_SITE_KEY'])
+
+        # 🔹 Extraer la puntuación de riesgo y validar si es suficiente para aprobar el login
+        risk_analysis = recaptcha_result.get("riskAnalysis", {})
+        score = risk_analysis.get("score", 0)
+        
+        print(f"Puntuación de reCAPTCHA recibida: {score}", file=sys.stdout)
+        sys.stdout.flush()
+
+        if score < 0.5:
             error = "Verificación de reCAPTCHA fallida. Inténtalo de nuevo."
+            return render_template('login.html', error=error, RECAPTCHA_SITE_KEY=current_app.config['RECAPTCHA_SITE_KEY'])
 
-        elif username == Config.ADMIN_USERNAME and password == Config.ADMIN_PASSWORD:
+        # 🔹 Validar credenciales de usuario después de la validación de reCAPTCHA
+        if username == current_app.config['ADMIN_USERNAME'] and password == current_app.config['ADMIN_PASSWORD']:
             session['logged_in'] = True
             return redirect(url_for('routes.admin'))
         else:
             error = 'Usuario o contraseña incorrectos'
 
-    return render_template('login.html', error=error, RECAPTCHA_SITE_KEY=os.getenv("RECAPTCHA_SITE_KEY"))
+    return render_template('login.html', error=error, RECAPTCHA_SITE_KEY=current_app.config['RECAPTCHA_SITE_KEY'])
 
 @routes.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('routes.login'))
+
 
 ### PÁGINAS PRINCIPALES ###
 

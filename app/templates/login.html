@@ -1,4 +1,4 @@
-<!-- Plantilla login v.1.0 -->
+<!-- Plantilla login v.1.2 - Integración con reCAPTCHA Enterprise -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,6 +7,21 @@
     <title>Iniciar Sesión</title>
     <!-- Material Design Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.3.1/mdb.min.css" rel="stylesheet">
+    
+    <!-- Variable de clave pública para reCAPTCHA -->
+    <script>
+        var recaptchaSiteKey = "{{ RECAPTCHA_SITE_KEY }}";
+    </script>
+    
+    <!-- Cargar reCAPTCHA con la clave correctamente inyectada -->
+    <!-- <script src="https://www.google.com/recaptcha/enterprise.js?render={{ RECAPTCHA_SITE_KEY }}"></script>-->
+    <script>
+        var recaptchaSiteKey = "{{ RECAPTCHA_SITE_KEY }}";
+        var script = document.createElement("script");
+        script.src = "https://www.google.com/recaptcha/enterprise.js?render=" + recaptchaSiteKey;
+        document.head.appendChild(script);
+    </script>
+
     <style>
         body {
             min-height: 100vh;
@@ -31,8 +46,36 @@
             background-color: var(--mdb-dark-bg);
             color: var(--mdb-dark-color);
         }
+        .recaptcha-container {
+            width: 100%;
+            display: flex;
+            justify-content: center; /* Centrar horizontalmente */
+            align-items: center; /* Alinear verticalmente */
+            margin-top: 10px; /* Espacio entre el botón y la insignia */
+            position: relative; /* Mantener dentro del flujo */
+            overflow: hidden; /* Evitar que se salga */
+        }
+
+        .grecaptcha-badge {
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 256px !important;
+            height: 60px !important;
+            display: block !important;
+            visibility: visible !important;
+        }
     </style>
+    <script>
+        grecaptcha.enterprise.render(document.body, {
+            sitekey: "6LdzadMqAAAAAFfx3smEGYJsuF-8T3PvRUemr4Wo",
+            badge: "bottomright",
+            size: "invisible"
+        });
+    </script>
 </head>
+
 <body class="dark-mode">
 
     <div class="card shadow p-4">
@@ -42,7 +85,7 @@
             <div class="alert alert-danger" role="alert">{{ error }}</div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('routes.login') }}">
+        <form id="login-form" method="POST" action="{{ url_for('routes.login') }}">
             <div class="form-outline mb-4">
                 <input type="text" id="username" name="username" class="form-control" required />
                 <label class="form-label" for="username">Usuario</label>
@@ -52,17 +95,40 @@
                 <input type="password" id="password" name="password" class="form-control" required />
                 <label class="form-label" for="password">Contraseña</label>
             </div>
-        
-            <!-- Google reCAPTCHA -->
-            <div class="g-recaptcha mb-4" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
-        
-            <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
-        </form>       
+            <!-- Campo oculto para el token de reCAPTCHA -->
+            <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+            <div class="recaptcha-container"></div> 
+            <button type="submit" class="btn btn-primary btn-block" style="margin: 50px 0 50px 0;">Ingresar</button>
+            
+        </form>    
     </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.3.1/mdb.min.js"></script>
-    <!-- Agregar el script de Google reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+    <!-- Script para ejecutar reCAPTCHA Enterprise antes de enviar el formulario -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            grecaptcha.enterprise.ready(function() {
+                grecaptcha.enterprise.render("recaptcha-inline", {
+                    'sitekey': recaptchaSiteKey,
+                    'size': 'invisible',
+                    'badge': 'inline'
+                });
+            });
+        });
+    
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Evita el envío inmediato del formulario
+    
+            grecaptcha.enterprise.execute(recaptchaSiteKey, {action: 'login'})
+            .then(function(token) {
+                document.getElementById('g-recaptcha-response').value = token;
+                document.getElementById('login-form').submit();
+            }).catch(function(error) {
+                console.error("❌ Error ejecutando reCAPTCHA:", error);
+            });
+        });
+    </script>
 </body>
 </html>
