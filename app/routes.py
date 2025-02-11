@@ -62,7 +62,7 @@ def login():
         else:
             error = 'Usuario o contraseña incorrectos'
 
-    return render_template('login.html', error=error)
+    return render_template('login.html', error=error, RECAPTCHA_SITE_KEY=os.getenv("RECAPTCHA_SITE_KEY"))
 
 @routes.route('/logout')
 def logout():
