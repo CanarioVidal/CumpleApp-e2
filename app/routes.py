@@ -73,7 +73,7 @@ def logout():
 
 @routes.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('registro-cumples.html')
 
 @routes.route('/admin')
 @login_required
