@@ -50,7 +50,7 @@ def iniciar_tareas(app):
             scheduler.add_job(
                 tarea_recordatorio,
                 'cron',
-                hour=10, minute=00,
+                hour=16, minute=00,
                 id='recordatorios_diarios',
                 replace_existing=True
             )
@@ -60,7 +60,7 @@ def iniciar_tareas(app):
             scheduler.add_job(
                 tarea_cumpleaños,
                 'cron',
-                hour=10, minute=00,
+                hour=16, minute=00,
                 id='saludos_diarios',
                 replace_existing=True
             )

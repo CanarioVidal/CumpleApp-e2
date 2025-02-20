@@ -1,11 +1,10 @@
-# Envío de correos v1.5.1
+# Envío de correos v1.6.0
 from flask_mail import Message
 from flask import current_app, render_template
 from app import mail, db
 from app.models import User
 from datetime import datetime, timedelta
 import logging
-import os
 
 # Configurar logs para correos
 logging.basicConfig(
@@ -25,7 +24,7 @@ def enviar_correo(email, subject, body):
         msg = Message(
             subject=subject,
             recipients=[email],
-            sender=current_app.config['MAIL_DEFAULT_SENDER']  # Especificar remitente explícitamente
+            sender=current_app.config['MAIL_DEFAULT_SENDER']
         )
         msg.body = body
         with current_app.app_context():
@@ -40,13 +39,12 @@ def enviar_correos_recordatorio(email_prueba=None):
     También soporta el envío de un correo de prueba.
     """
     if email_prueba:
-        # Enviar un correo de prueba de recordatorio
         print(f"Enviando correo de prueba de recordatorio a: {email_prueba}")
         try:
             msg = Message(
                 subject="Recordatorio Especial",
                 recipients=[email_prueba],
-                sender=current_app.config['MAIL_DEFAULT_SENDER'],  # Especificar remitente explícitamente
+                sender=current_app.config['MAIL_DEFAULT_SENDER'],
                 html=render_template('emails/recordatorio.html', name="Usuario de Prueba")
             )
             mail.send(msg)
@@ -56,12 +54,10 @@ def enviar_correos_recordatorio(email_prueba=None):
             print(f"Error al enviar correo de prueba: {str(e)}")
             return False
 
-    # Lógica para enviar recordatorios a usuarios con cumpleaños en 7 días
     hoy = datetime.now().date()
     objetivo = hoy + timedelta(days=7)
 
     try:
-        # Consultar usuarios cuyo cumpleaños está en 7 días
         usuarios = User.query.filter(
             db.extract('month', User.birthday) == objetivo.month,
             db.extract('day', User.birthday) == objetivo.day
@@ -72,12 +68,13 @@ def enviar_correos_recordatorio(email_prueba=None):
             return
 
         for usuario in usuarios:
+            nombre_a_usar = usuario.nickname if usuario.nickname else usuario.name
             try:
                 msg = Message(
                     subject="¡Tu cumpleaños está cerca!",
                     recipients=[usuario.email],
-                    sender=current_app.config['MAIL_DEFAULT_SENDER'],  # Especificar remitente explícitamente
-                    html=render_template('emails/recordatorio.html', name=usuario.name)
+                    sender=current_app.config['MAIL_DEFAULT_SENDER'],
+                    html=render_template('emails/recordatorio.html', name=nombre_a_usar)
                 )
                 mail.send(msg)
                 print(f"Recordatorio enviado a: {usuario.email}")
@@ -96,13 +93,12 @@ def enviar_correos_cumpleaños(email_prueba=None):
     También soporta el envío de un correo de prueba.
     """
     if email_prueba:
-        # Enviar un correo de prueba de cumpleaños
         print(f"Enviando correo de prueba de cumpleaños a: {email_prueba}")
         try:
             msg = Message(
                 subject="¡Feliz Cumpleaños!",
                 recipients=[email_prueba],
-                sender=current_app.config['MAIL_DEFAULT_SENDER'],  # Especificar remitente explícitamente
+                sender=current_app.config['MAIL_DEFAULT_SENDER'],
                 html=render_template('emails/saludo.html', name="Usuario de Prueba")
             )
             mail.send(msg)
@@ -112,11 +108,9 @@ def enviar_correos_cumpleaños(email_prueba=None):
             print(f"Error al enviar correo de prueba: {str(e)}")
             return False
 
-    # Lógica para enviar correos de cumpleaños a los usuarios cuyo cumpleaños es hoy
     hoy = datetime.now().date()
 
     try:
-        # Consultar usuarios cuyo cumpleaños es hoy
         usuarios = User.query.filter(
             db.extract('month', User.birthday) == hoy.month,
             db.extract('day', User.birthday) == hoy.day
@@ -127,12 +121,13 @@ def enviar_correos_cumpleaños(email_prueba=None):
             return
 
         for usuario in usuarios:
+            nombre_a_usar = usuario.nickname if usuario.nickname else usuario.name
             try:
                 msg = Message(
                     subject="¡Feliz Cumpleaños!",
                     recipients=[usuario.email],
-                    sender=current_app.config['MAIL_DEFAULT_SENDER'],  # Especificar remitente explícitamente
-                    html=render_template('emails/saludo.html', name=usuario.name)
+                    sender=current_app.config['MAIL_DEFAULT_SENDER'],
+                    html=render_template('emails/saludo.html', name=nombre_a_usar)
                 )
                 mail.send(msg)
                 print(f"Correo de cumpleaños enviado a: {usuario.email}")
@@ -145,21 +140,9 @@ def enviar_correos_cumpleaños(email_prueba=None):
         print(f"Error general en enviar_correos_cumpleaños: {str(general_error)}")
         current_app.logger.error(f"Error general en enviar_correos_cumpleaños: {str(general_error)}")
 
-
-
-def agregar_imagen_a_correo(msg, imagen_id, ruta_relativa):
-    """
-    Agrega una imagen como contenido embebido en un correo utilizando Content ID.
-    """
-    try:
-        with current_app.open_resource(os.path.join("static", "images", ruta_relativa)) as img:
-            msg.attach(imagen_id, "image/png", img.read(), "inline", headers={"Content-ID": f"<{imagen_id}>"})
-    except FileNotFoundError:
-        logging.error(f"Error: No se encontró la imagen {ruta_relativa}")
-
 def enviar_correo_bienvenida(email, nombre):
     """
-    Envía un correo de bienvenida cuando un usuario se registra, con imagen en Content ID.
+    Envía un correo de bienvenida cuando un usuario se registra.
     """
     try:
         msg = Message(
@@ -168,10 +151,6 @@ def enviar_correo_bienvenida(email, nombre):
             sender=current_app.config['MAIL_DEFAULT_SENDER']
         )
         msg.html = render_template('emails/registrook.html', name=nombre)
-
-        # 🔹 Agregar imágenes con Content ID
-        agregar_imagen_a_correo(msg, "logo_cid", "logo.png")  # ✅ Ahora busca en static/images/logo.png
-        agregar_imagen_a_correo(msg, "hero_cid", "hero.jpg")  # ✅ Asegúrate de que hero.jpg esté en static/images
 
         mail.send(msg)
         logging.info(f"Correo de bienvenida enviado a {email}")
