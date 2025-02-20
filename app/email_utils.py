@@ -1,10 +1,11 @@
-# Envío de correos v1.6.0
+# Envío de correos v1.9.0
 from flask_mail import Message
 from flask import current_app, render_template
 from app import mail, db
 from app.models import User
 from datetime import datetime, timedelta
 import logging
+import traceback
 
 # Configurar logs para correos
 logging.basicConfig(
@@ -140,19 +141,25 @@ def enviar_correos_cumpleaños(email_prueba=None):
         print(f"Error general en enviar_correos_cumpleaños: {str(general_error)}")
         current_app.logger.error(f"Error general en enviar_correos_cumpleaños: {str(general_error)}")
 
-def enviar_correo_bienvenida(email, nombre):
+#Correo de registro exitoso
+def enviar_correo_bienvenida(email, nombre, nickname=None):
     """
     Envía un correo de bienvenida cuando un usuario se registra.
+    Usa el apodo si está disponible, sino el nombre.
     """
     try:
+        # Usa el nickname si está, o el nombre
+        nombre_a_usar = nickname if nickname else nombre
+
         msg = Message(
             subject="¡Tu registro fue exitoso!",
-            recipients=[email],
+            recipients=[email],  # Email viene directo del formulario
             sender=current_app.config['MAIL_DEFAULT_SENDER']
         )
-        msg.html = render_template('emails/registrook.html', name=nombre)
+        msg.html = render_template('emails/registrook.html', name=nombre_a_usar)
 
         mail.send(msg)
         logging.info(f"Correo de bienvenida enviado a {email}")
+
     except Exception as e:
         logging.error(f"Error al enviar correo de bienvenida a {email}: {str(e)}")

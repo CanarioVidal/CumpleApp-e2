@@ -172,8 +172,6 @@ def buscar_usuarios():
         "redeemed": user.redeemed
     } for user in resultados])
 
-### RESTAURACIÓN DE RUTAS ELIMINADAS ###
-
 # Ruta para agregar usuarios con soporte para GET y POST
 @routes.route('/agregar-cumple', methods=['GET', 'POST'])
 def agregar_usuario():
@@ -210,7 +208,7 @@ def agregar_usuario():
             db.session.commit()
 
             # 🔹 Llamar a la nueva función en email_utils.py
-            enviar_correo_bienvenida(email, nombre)
+            enviar_correo_bienvenida(email, nombre, apodo,)
 
             return jsonify({'success': True, 'message': 'Cumpleaños agregado con éxito.'}), 200
         except Exception as e:
