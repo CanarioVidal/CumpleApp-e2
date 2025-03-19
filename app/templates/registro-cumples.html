@@ -109,7 +109,7 @@
                 <input type="date" id="birthday" name="birthday" required>
             </div>
 
-            <p>Por dónde querés que nos comuniquemos</p>
+            <!--  <p>Por dónde querés que nos comuniquemos</p>
             <div class="checkbox-group">
                 <label>
                     <input type="checkbox" name="contacto" value="Instagram">
@@ -123,18 +123,18 @@
                     <input type="checkbox" name="contacto" value="Whatsapp">
                     <span>Whatsapp</span>
                 </label>
-            </div>
+            </div> -->
 
             <button type="submit" class="btn-large">Agregar</button>
         </form>
 
         <footer>
-            <p>Al enviar el formulario estás aceptando nuestros <a href="#" style="color:white; text-decoration: underline;">Términos y condiciones</a> y nuestra <a href="#" style="color:white; text-decoration: underline;">Política de privacidad de datos</a>.</p>
+            <p>Al enviar el formulario estás aceptando nuestros <a href="{{ url_for('routes.terminos_y_condiciones') }}" style="color:white; text-decoration: underline;">Términos y condiciones</a> <br>y nuestra <a href="{{ url_for('routes.politica_de_datos') }}" style="color:white; text-decoration: underline;">Política de privacidad de datos</a>.</p>
             <p>Para poder reclamar tu regalo tenés que presentar tu CI o un documento que acredite tu fecha de cumpleaños.</p>
             <div class="social-icons">
-                <a href="#"><i class="fab fa-facebook"></i></a>
-                <a href="#"><i class="fab fa-instagram"></i></a>
-                <a href="#"><i class="fab fa-whatsapp"></i></a>
+                <a href="https://www.instagram.com/theendcraftbeer" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.facebook.com/theendcraftbeer" target="_blank"><i class="fab fa-facebook"></i></a>
+                <a href="https://api.whatsapp.com/send?phone=59896148029&text=Hola%20The%20End!" target="_blank"><i class="fab fa-whatsapp"></i></a>
             </div>
             <p>Diseño y desarrollo <a href="#" style="color:white; text-decoration: underline;">UMO Comunicación Creativa</a> | 2025</p>
         </footer>

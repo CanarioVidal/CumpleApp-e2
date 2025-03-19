@@ -348,8 +348,13 @@ def borrar_usuarios():
     except Exception as e:
         return jsonify({'success': False, 'error': f'Error al borrar usuarios: {str(e)}'}), 500
 
-### CONCLUSIÓN ###
-# - Se corrigió la ruta de búsqueda de usuarios.
-# - Se restauraron las rutas eliminadas: "agregar-cumple" y "ver-usuarios".
-# - Se marcaron claramente las rutas de envío de correos con "IMPORTANTE: NO BORRAR".
-# - Se verificó que todas las funciones esenciales estén presentes y funcionando correctamente.
+@routes.route('/terminos-y-condiciones')
+def terminos_y_condiciones():
+    """Muestra la página de Términos y Condiciones."""
+    return render_template('terminos.html')
+
+@routes.route('/politica-de-datos')
+def politica_de_datos():
+    """Muestra la página de Política de Datos."""
+    return render_template('politica_datos.html')
+
