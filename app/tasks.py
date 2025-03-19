@@ -1,4 +1,3 @@
-# Define las tareas programadas con APScheduler v.1.9 (Corrección de duplicación de tareas)
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import ConflictingIdError
 from pytz import timezone
@@ -12,7 +11,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# Definir la zona horaria de Uruguay (-03:00)
+# Definir la zona horaria de Uruguay (-03:55)
 TZ_URUGUAY = timezone('America/Montevideo')
 
 # Variable global para almacenar el scheduler y evitar múltiples instancias
@@ -50,9 +49,9 @@ def iniciar_tareas(app):
             scheduler.add_job(
                 tarea_recordatorio,
                 'cron',
-                hour=16, minute=00,
+                hour=19, minute=55,
                 id='recordatorios_diarios',
-                replace_existing=True
+                replace_existing=False  # Cambiado a False para evitar reemplazo
             )
             logging.info("✅ Tarea 'recordatorios_diarios' programada.")
 
@@ -60,9 +59,9 @@ def iniciar_tareas(app):
             scheduler.add_job(
                 tarea_cumpleaños,
                 'cron',
-                hour=16, minute=00,
+                hour=19, minute=55,
                 id='saludos_diarios',
-                replace_existing=True
+                replace_existing=False  # Cambiado a False para evitar reemplazo
             )
             logging.info("✅ Tarea 'saludos_diarios' programada.")
 
